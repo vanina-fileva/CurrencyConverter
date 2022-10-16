@@ -37,6 +37,7 @@ class ConverterViewController: UIViewController {
         super.viewDidLoad()
         updateBalance()
         setUpCurrencyExchangeViews()
+        sourceCurrencyView.textField.addTarget(self, action: #selector(textFieldChanged(_:)), for: .editingChanged);
     }
     
     private func updateBalance() {
@@ -89,6 +90,14 @@ class ConverterViewController: UIViewController {
                let sourceAmount = Double(text) {
                 self?.from(sourceAmount: sourceAmount, updateTarget: self?.sourceCurrencyView.textField)
             }
+        }
+    }
+    
+    @objc
+    private
+    func textFieldChanged(_ textField: UITextField) {
+        if let text = sourceCurrencyView.textField.text, text.isEmpty {
+            targetCurrencyView.textField.text = ""
         }
     }
     
@@ -186,13 +195,24 @@ extension ConverterViewController: UITextFieldDelegate {
            let amount = Double(typed) else {
             return true
         }
+        
+        let isNumeric = typed.isEmpty || (Double(typed) != nil)
+        let numberOfDots = typed.components(separatedBy: ".").count - 1
+    
+        let numberOfDecimalDigits: Int
+    if let dotIndex = typed.firstIndex(of: ".") {
+            numberOfDecimalDigits = typed.distance(from: dotIndex, to: typed.endIndex) - 1
+        } else {
+            numberOfDecimalDigits = 0
+        }
+        
         if textField === sourceCurrencyView.textField {
             from(sourceAmount: amount, updateTarget: targetCurrencyView.textField)
         }
         else if textField === targetCurrencyView.textField {
             from(sourceAmount: amount, updateTarget: sourceCurrencyView.textField)
         }
-        return true
+        return isNumeric && numberOfDots <= 1 && numberOfDecimalDigits <= 2
     }
 }
 
