@@ -41,15 +41,15 @@ extension AmountInCurrency: Codable {
     }
 }
 
-protocol CurrencyVault {
-    var all: [AmountInCurrency] { get set }
+protocol CurrencyBalance {
+    var inCurrencies: [AmountInCurrency] { get set }
 }
 
-class CurrencyLocalStorage: CurrencyVault {
+class CurrencyBalanceLocalStorage: CurrencyBalance {
     
     init() {
-        all = type(of: self).saved() ?? type(of: self).initial
-        try? type(of: self).save(currencies: all)
+        inCurrencies = type(of: self).saved() ?? type(of: self).initial
+        try? type(of: self).save(currencies: inCurrencies)
     }
     
     private static func save(currencies: [AmountInCurrency]) throws {
@@ -73,9 +73,9 @@ class CurrencyLocalStorage: CurrencyVault {
     }
 
     // CurrencyVault
-    var all: [AmountInCurrency] {
+    var inCurrencies: [AmountInCurrency] {
         didSet {
-            try? type(of: self).save(currencies: all)
+            try? type(of: self).save(currencies: inCurrencies)
         }
     }
 }

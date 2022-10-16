@@ -46,9 +46,9 @@
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                             </view>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="T5e-Jf-MAL">
-                                <rect key="frame" x="173.5" y="819" width="67" height="31"/>
+                                <rect key="frame" x="169" y="819" width="76.5" height="31"/>
                                 <state key="normal" title="Button"/>
-                                <buttonConfiguration key="configuration" style="plain" title="Button"/>
+                                <buttonConfiguration key="configuration" style="plain" title="SUBMIT"/>
                                 <connections>
                                     <action selector="didTouchUpInside:" destination="BYZ-38-t0r" eventType="touchUpInside" id="WfY-Uf-QS1"/>
                                 </connections>
@@ -79,7 +79,7 @@
                     </view>
                     <navigationItem key="navigationItem" id="Btp-Bs-i2I"/>
                     <connections>
-                        <outlet property="allCurrenciesView" destination="r1G-ct-onq" id="kb6-Tp-ehV"/>
+                        <outlet property="balanceView" destination="r1G-ct-onq" id="wvF-Yk-ozV"/>
                         <outlet property="sourceCurrencyView" destination="IY7-2Z-ieR" id="fnC-Ee-Lu2"/>
                         <outlet property="targetCurrencyView" destination="JVu-Ss-FLz" id="62q-KU-hMJ"/>
                     </connections>

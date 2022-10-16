@@ -8,14 +8,15 @@
 import Foundation
 
 protocol CurrencyConverter {
-    func exchange(from: String, amount: Double, to: String,
+    func exchange(sourceAmount: Double, sourceCurrency: String, targetCurrency: String,
                   completion: @escaping (Result<Double, Error>) -> ())
 }
 
 class CurrencyAPIConverter: CurrencyConverter {
     
-    func exchange(from: String, amount: Double, to: String, completion: @escaping (Result<Double, Error>) -> ()) {
-        let urlString = "http://api.evp.lt/currency/commercial/exchange/\(amount)-\(from)/\(to)/latest"
+    func exchange(sourceAmount: Double, sourceCurrency: String, targetCurrency: String,
+                  completion: @escaping (Result<Double, Error>) -> ()) {
+        let urlString = "http://api.evp.lt/currency/commercial/exchange/\(sourceAmount)-\(sourceCurrency)/\(targetCurrency)/latest"
         guard let endpoint = URL(string: urlString) else {
             return
         }
