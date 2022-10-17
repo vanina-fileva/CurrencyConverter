@@ -12,6 +12,7 @@ class ConverterViewController: UIViewController {
     @IBOutlet weak var balanceView: UIStackView!
     @IBOutlet weak var sourceCurrencyView: CurrencyExchangeView!
     @IBOutlet weak var targetCurrencyView: CurrencyExchangeView!
+    @IBOutlet weak var submitButton: UIButton!
     
     var converter: CurrencyConverter = CurrencyAPIConverter()
     var balance: CurrencyBalance = CurrencyBalanceLocalStorage()
@@ -33,10 +34,20 @@ class ConverterViewController: UIViewController {
         }
     }
     
+    private var commission: Double {
+        let percentage = 0.7
+        guard let value = sourceCurrencyView.textField.text?.toDouble() else { return 0}
+        let newValue = (percentage / 100) * value
+        return newValue
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         updateBalance()
         setUpCurrencyExchangeViews()
+        navigationItem.title = "Currency converter"
+        self.navigationController?.navigationBar.backgroundColor = .blue
+        submitButton.buttonCorner()
         sourceCurrencyView.textField.addTarget(self, action: #selector(textFieldChanged(_:)), for: .editingChanged);
     }
     
@@ -145,6 +156,7 @@ class ConverterViewController: UIViewController {
     
     @IBAction func didTouchUpInside(_ updateBalanceButton: UIButton) {
         exchangeFromBalance()
+        showAlertMessage()
     }
     
     private func exchange(sourceAmount: Double,
@@ -186,6 +198,12 @@ class ConverterViewController: UIViewController {
             }
         }
         updateBalance()
+    }
+    
+    func showAlertMessage() {
+        let alert = UIAlertController(title: "Currency converted", message: "You have converted \(String(describing: sourceCurrencyView.textField.text ?? "")) \(String(describing: sourceCurrency?.rawValue ?? "")) to \(String(describing: targetCurrencyView.textField.text ?? "")) \(String(describing: targetCurrency?.rawValue ?? "")). Commission Fee - \(String(describing: commission.amountStringValue ?? "")) \(String(describing: sourceCurrency?.rawValue ?? "")).", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Done", style: .default))
+        present(alert, animated: true)
     }
 }
 
