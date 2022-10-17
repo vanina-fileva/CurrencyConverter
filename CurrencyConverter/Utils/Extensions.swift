@@ -40,3 +40,18 @@ extension UIButton {
         heightAnchor.constraint(equalToConstant: 48).isActive = true
     }
 }
+
+extension UIViewController {
+    
+    internal func hideKeyboardOnTap(){
+        let tap = UITapGestureRecognizer(target: self, action: #selector(self.hideKeyboard))
+        tap.cancelsTouchesInView = false
+        self.view.addGestureRecognizer(tap);
+        
+    }
+    
+    @objc private func hideKeyboard(){
+        self.view.endEditing(true);
+    }
+}
+

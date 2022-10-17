@@ -48,7 +48,11 @@ class ConverterViewController: UIViewController {
         navigationItem.title = "Currency converter"
         self.navigationController?.navigationBar.backgroundColor = .blue
         submitButton.buttonCorner()
-        sourceCurrencyView.textField.addTarget(self, action: #selector(textFieldChanged(_:)), for: .editingChanged);
+        hideKeyboardOnTap()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        sourceCurrencyView.textField.becomeFirstResponder()
     }
     
     private func updateBalance() {
@@ -104,13 +108,6 @@ class ConverterViewController: UIViewController {
         }
     }
     
-    @objc
-    private
-    func textFieldChanged(_ textField: UITextField) {
-        if let text = sourceCurrencyView.textField.text, text.isEmpty {
-            targetCurrencyView.textField.text = ""
-        }
-    }
     
     private
     func presentAvailable(from currencies: [Currency], except selected: Currency?, completion: @escaping (Currency) -> ()) {
@@ -214,23 +211,26 @@ extension ConverterViewController: UITextFieldDelegate {
             return true
         }
         
-        let isNumeric = typed.isEmpty || (Double(typed) != nil)
-        let numberOfDots = typed.components(separatedBy: ".").count - 1
-    
-        let numberOfDecimalDigits: Int
-    if let dotIndex = typed.firstIndex(of: ".") {
-            numberOfDecimalDigits = typed.distance(from: dotIndex, to: typed.endIndex) - 1
-        } else {
-            numberOfDecimalDigits = 0
-        }
-        
         if textField === sourceCurrencyView.textField {
             from(sourceAmount: amount, updateTarget: targetCurrencyView.textField)
         }
         else if textField === targetCurrencyView.textField {
             from(sourceAmount: amount, updateTarget: sourceCurrencyView.textField)
         }
-        return isNumeric && numberOfDots <= 1 && numberOfDecimalDigits <= 2
+        return true
+    }
+    
+    func textFieldDidChangeSelection(_ textField: UITextField) {
+        
+        if let typedText = textField.text {
+            var dotCount = 0
+            for c in typedText {
+                if String(c) == "." || String(c) == "," {  dotCount += 1  }
+            }
+            if dotCount >= 2 {    
+                textField.text = String(typedText.dropLast())
+            }
+        }
     }
 }
 
