@@ -34,12 +34,12 @@ class ConverterViewController: UIViewController {
         }
     }
     
-    private var commission: Double {
-        let percentage = 0.7
-        guard let value = sourceCurrencyView.textField.text?.toDouble() else { return 0}
-        let newValue = (percentage / 100) * value
-        return newValue
-    }
+//    private var commission: Double {
+//        let percentage = 0.7
+//        guard let value = sourceCurrencyView.textField.text?.toDouble() else { return 0}
+//        let newValue = (percentage / 100) * value
+//        return newValue
+//    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -152,8 +152,8 @@ class ConverterViewController: UIViewController {
     }
     
     @IBAction func didTouchUpInside(_ updateBalanceButton: UIButton) {
-        exchangeFromBalance()
-        showAlertMessage()
+        presentAlertToExchangeFromBalance()
+//        showAlertMessage()
     }
     
     private func exchange(sourceAmount: Double,
@@ -198,9 +198,20 @@ class ConverterViewController: UIViewController {
     }
     
     func showAlertMessage() {
-        let alert = UIAlertController(title: "Currency converted", message: "You have converted \(String(describing: sourceCurrencyView.textField.text ?? "")) \(String(describing: sourceCurrency?.rawValue ?? "")) to \(String(describing: targetCurrencyView.textField.text ?? "")) \(String(describing: targetCurrency?.rawValue ?? "")). Commission Fee - \(String(describing: commission.amountStringValue ?? "")) \(String(describing: sourceCurrency?.rawValue ?? "")).", preferredStyle: .alert)
+        let commision = PercentageFee(sourceAmount: <#T##Double#>, sourceCurrency: <#T##Currency#>)
+        let message =  "You have converted \(String(describing: sourceCurrencyView.textField.text ?? "")) \(String(describing: sourceCurrency?.rawValue ?? "")) to \(String(describing: targetCurrencyView.textField.text ?? "")) \(String(describing: targetCurrency?.rawValue ?? "")). Commission Fee - \(String(describing: commission.amountStringValue ?? "")) \(String(describing: sourceCurrency?.rawValue ?? ""))."
+        let alert = UIAlertController(title: "Currency converted", message:, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Done", style: .default))
         present(alert, animated: true)
+    }
+    
+    func shouldEnableSubmit(_ isEnabled: Bool) {
+        submitButton.isEnabled = isEnabled
+        if isEnabled {
+            submitButton.backgroundColor = .blue
+        } else {
+            submitButton.backgroundColor = .gray
+        }
     }
 }
 
@@ -209,6 +220,12 @@ extension ConverterViewController: UITextFieldDelegate {
         guard let typed = (textField.text as NSString?)?.replacingCharacters(in: range, with: string),
            let amount = Double(typed) else {
             return true
+        }
+        
+        if !(sourceCurrencyView.textField.text?.isEmpty ?? true) && !(targetCurrencyView.textField.text?.isEmpty ?? true){
+            shouldEnableSubmit(true)
+        } else {
+            shouldEnableSubmit(false)
         }
         
         if textField === sourceCurrencyView.textField {

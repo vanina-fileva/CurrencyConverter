@@ -41,17 +41,29 @@
                                 <constraints>
                                     <constraint firstAttribute="height" constant="80" id="3Xa-pG-Xli"/>
                                 </constraints>
+                                <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="image" keyPath="image" value="arrow.up" catalog="system"/>
+                                </userDefinedRuntimeAttributes>
                             </view>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="JVu-Ss-FLz" customClass="CurrencyExchangeView" customModule="CurrencyConverter" customModuleProvider="target">
                                 <rect key="frame" x="12" y="337" width="390" height="80"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <color key="tintColor" systemColor="labelColor"/>
+                                <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="image" keyPath="image" value="arrow.down" catalog="system"/>
+                                </userDefinedRuntimeAttributes>
                             </view>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="T5e-Jf-MAL">
-                                <rect key="frame" x="169" y="561" width="76.5" height="31"/>
+                                <rect key="frame" x="169" y="819" width="76.5" height="31"/>
+                                <color key="backgroundColor" systemColor="systemBlueColor"/>
                                 <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 <state key="normal" title="Button"/>
                                 <buttonConfiguration key="configuration" style="plain" title="SUBMIT"/>
+                                <userDefinedRuntimeAttributes>
+                                    <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                        <integer key="value" value="10"/>
+                                    </userDefinedRuntimeAttribute>
+                                </userDefinedRuntimeAttributes>
                                 <connections>
                                     <action selector="didTouchUpInside:" destination="BYZ-38-t0r" eventType="touchUpInside" id="WfY-Uf-QS1"/>
                                 </connections>
@@ -74,7 +86,7 @@
                             <constraint firstItem="JVu-Ss-FLz" firstAttribute="leading" secondItem="IY7-2Z-ieR" secondAttribute="leading" id="iZ7-lN-T9a"/>
                             <constraint firstItem="JVu-Ss-FLz" firstAttribute="height" secondItem="IY7-2Z-ieR" secondAttribute="height" id="nKW-Mz-yBO"/>
                             <constraint firstItem="T5e-Jf-MAL" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="qCg-O4-q78"/>
-                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="T5e-Jf-MAL" secondAttribute="bottom" constant="270" id="tPx-BR-wR6"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="T5e-Jf-MAL" secondAttribute="bottom" constant="12" id="tPx-BR-wR6"/>
                             <constraint firstItem="eMu-Gg-0Qn" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="12" id="u56-xM-nuh"/>
                             <constraint firstItem="IY7-2Z-ieR" firstAttribute="leading" secondItem="moG-ve-Lh1" secondAttribute="leading" id="vQM-Ra-2sH"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="moG-ve-Lh1" secondAttribute="trailing" constant="12" id="x3P-en-fW1"/>
@@ -112,11 +124,16 @@
         </scene>
     </scenes>
     <resources>
+        <image name="arrow.down" catalog="system" width="120" height="128"/>
+        <image name="arrow.up" catalog="system" width="120" height="128"/>
         <systemColor name="labelColor">
             <color white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
         <systemColor name="systemBackgroundColor">
             <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
+        <systemColor name="systemBlueColor">
+            <color red="0.0" green="0.47843137254901963" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemGray2Color">
             <color red="0.68235294117647061" green="0.68235294117647061" blue="0.69803921568627447" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

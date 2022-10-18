@@ -18,6 +18,7 @@
 		2B3F4B4E28FABA4800070A72 /* CurrencyExchangeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B3F4B4D28FABA4800070A72 /* CurrencyExchangeView.swift */; };
 		2B3F4B5028FABA5800070A72 /* CurrencyExchangeView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2B3F4B4F28FABA5800070A72 /* CurrencyExchangeView.xib */; };
 		2BE13F0628FBF79C00703782 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE13F0528FBF79C00703782 /* Extensions.swift */; };
+		2BE13F0828FE85EE00703782 /* ExchangeFee.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2BE13F0728FE85ED00703782 /* ExchangeFee.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -34,6 +35,7 @@
 		2B3F4B4D28FABA4800070A72 /* CurrencyExchangeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrencyExchangeView.swift; sourceTree = "<group>"; };
 		2B3F4B4F28FABA5800070A72 /* CurrencyExchangeView.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CurrencyExchangeView.xib; sourceTree = "<group>"; };
 		2BE13F0528FBF79C00703782 /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		2BE13F0728FE85ED00703782 /* ExchangeFee.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeFee.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,6 +86,7 @@
 			children = (
 				2B3F4B4528F8A1FD00070A72 /* CurrencyConverter.swift */,
 				2B3F4B4B28F9E9A700070A72 /* CurrencyBalance.swift */,
+				2BE13F0728FE85ED00703782 /* ExchangeFee.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -201,6 +204,7 @@
 				2B3F4B4E28FABA4800070A72 /* CurrencyExchangeView.swift in Sources */,
 				2B3F4B3428F825A600070A72 /* SceneDelegate.swift in Sources */,
 				2BE13F0628FBF79C00703782 /* Extensions.swift in Sources */,
+				2BE13F0828FE85EE00703782 /* ExchangeFee.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
