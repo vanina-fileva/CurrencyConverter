@@ -7,21 +7,7 @@
 
 import UIKit
 
-@IBDesignable
-class CurrencyExchangeView: UIView {
-    
-    @IBOutlet weak var imageView: UIImageView!
-    @IBInspectable
-    var image: UIImage? {
-        didSet {
-            imageView.image = image
-        }
-    }
-    @IBOutlet weak var textField: UITextField!
-    @IBOutlet weak var button: UIButton!
-    
-//    private var contentView: UIView?
-
+class XibView: UIView {
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         loadFromNib()
@@ -32,7 +18,6 @@ class CurrencyExchangeView: UIView {
         loadFromNib()
     }
     
-    
     func loadFromNib() {
         let name = String(describing: CurrencyExchangeView.self)
         let bundle = Bundle(for: type(of: self))
@@ -42,5 +27,18 @@ class CurrencyExchangeView: UIView {
         }
         view.frame = self.bounds
         addSubview(view)
-//        contentView = view
-    }}
+    }
+}
+
+@IBDesignable
+class CurrencyExchangeView: XibView {
+    @IBOutlet weak var imageView: UIImageView!
+    @IBInspectable
+    var image: UIImage? {
+        didSet {
+            imageView.image = image
+        }
+    }
+    @IBOutlet weak var textField: UITextField!
+    @IBOutlet weak var button: UIButton!
+}

@@ -14,8 +14,10 @@ class ConverterViewController: UIViewController {
     @IBOutlet weak var targetCurrencyView: CurrencyExchangeView!
     @IBOutlet weak var submitButton: UIButton!
     
-    var converter: CurrencyConverter = CurrencyAPIConverter()
-    var balance: CurrencyBalance = CurrencyBalanceLocalStorage()
+    var balance: Balance = BalanceInLocalStorage()
+    lazy var converter: Converter = APIConverter()
+    private var lastConversionRequest: Cancellable?
+    lazy var commissionApplier: CommissionApplying = PercentageCommissionApplier()
     
     private var sourceCurrency: Currency? {
         didSet {
@@ -34,32 +36,24 @@ class ConverterViewController: UIViewController {
         }
     }
     
-//    private var commission: Double {
-//        let percentage = 0.7
-//        guard let value = sourceCurrencyView.textField.text?.toDouble() else { return 0}
-//        let newValue = (percentage / 100) * value
-//        return newValue
-//    }
-    
     override func viewDidLoad() {
         super.viewDidLoad()
-        updateBalance()
-        setUpCurrencyExchangeViews()
         navigationItem.title = "Currency converter"
-        self.navigationController?.navigationBar.backgroundColor = .blue
-        submitButton.buttonCorner()
-        hideKeyboardOnTap()
+        navigationController?.navigationBar.backgroundColor = .systemCyan
+        updateBalanceView()
+        setUpCurrencyExchangeViews()
     }
     
     override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
         sourceCurrencyView.textField.becomeFirstResponder()
     }
     
-    private func updateBalance() {
+    private func updateBalanceView() {
         balanceView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        for amountInCurrency in balance.inCurrencies {
+        for amountInCurrency in balance.amounts {
             let label = UILabel()
-            label.text = "\(amountInCurrency.amount.amountStringValue ?? "NA") \(amountInCurrency.currency.rawValue)"
+            label.text = "\(amountInCurrency.amount.amountStringValue) \(amountInCurrency.currency.rawValue)"
             balanceView.addArrangedSubview(label)
         }
     }
@@ -78,36 +72,29 @@ class ConverterViewController: UIViewController {
             for: .touchUpInside
         )
         
-        sourceCurrency = balance.inCurrencies[safe: 0]?.currency
-        targetCurrency = balance.inCurrencies[safe: 1]?.currency
+        sourceCurrency = balance.amounts[safe: 0]?.currency
+        targetCurrency = balance.amounts[safe: 1]?.currency
     }
     
     @objc
     private
     func didTouchUpInsideSourceCurrency(_ button: UIButton) {
-        presentAvailable(from: balance.inCurrencies.map { $0.currency }, except: sourceCurrency)
+        presentAvailable(from: balance.amounts.map { $0.currency }, except: sourceCurrency)
         { [weak self] selected in
             self?.sourceCurrency = selected
-            if let text = self?.sourceCurrencyView.textField.text,
-               let sourceAmount = Double(text) {
-                self?.from(sourceAmount: sourceAmount, updateTarget: self?.targetCurrencyView.textField)
-            }
+            self?.updateTargetTextField()
         }
     }
     
     @objc
     private
     func didTouchUpInsideTargetCurrency(_ button: UIButton) {
-        presentAvailable(from: balance.inCurrencies.map { $0.currency }, except: targetCurrency)
+        presentAvailable(from: balance.amounts.map { $0.currency }, except: targetCurrency)
         { [weak self] selected in
             self?.targetCurrency = selected
-            if let text = self?.targetCurrencyView.textField.text,
-               let sourceAmount = Double(text) {
-                self?.from(sourceAmount: sourceAmount, updateTarget: self?.sourceCurrencyView.textField)
-            }
+            self?.updateTargetTextField()
         }
     }
-    
     
     private
     func presentAvailable(from currencies: [Currency], except selected: Currency?, completion: @escaping (Currency) -> ()) {
@@ -133,121 +120,134 @@ class ConverterViewController: UIViewController {
         }
     }
     
-    private func from(sourceAmount: Double, updateTarget textField: UITextField?) {
+    private func updateTargetTextField() {
+        guard let text = sourceCurrencyView.textField.text,
+           let sourceAmount = Double(text),
+           let sourceCurrencyValue = sourceCurrency?.rawValue,
+           let targetCurrencyValue = targetCurrency?.rawValue else {
+            return targetCurrencyView.textField.text = "0"
+        }
+        update(sourceAmount: sourceAmount, sourceCurrency: sourceCurrencyValue,
+               targetCurrency: targetCurrencyValue, targetTextField: targetCurrencyView.textField)
+    }
+    
+    private func update(sourceAmount: Double, sourceCurrency: String, targetCurrency: String, targetTextField: UITextField?) {
+        DispatchQueue.main.async {
+            targetTextField?.text = "..."
+        }
+        lastConversionRequest?.cancel()
         DispatchQueue.global(qos: .userInteractive).asyncAfter(deadline: .now() + 1)
         { [weak self] in
-            self?.exchange(sourceAmount: sourceAmount,
-                           sourceCurrency: self?.sourceCurrency,
-                           targetCurrency: self?.targetCurrency)
-            { result in
+            self?.lastConversionRequest = self?.converter.convert(
+                sourceAmount: sourceAmount,
+                sourceCurrency: sourceCurrency,
+                targetCurrency: targetCurrency
+            ) { result in
                 switch result {
                 case .success(let targetAmount):
-                    ConverterViewController.present(amount: targetAmount, on: textField)
+                    DispatchQueue.main.async {
+                        targetTextField?.text = targetAmount.amountStringValue
+                    }
                 case .failure(let error):
-                    // TODO: Handle echange errors
                     print(error)
                 }
             }
         }
     }
     
-    @IBAction func didTouchUpInside(_ updateBalanceButton: UIButton) {
-        presentAlertToExchangeFromBalance()
-//        showAlertMessage()
-    }
-    
-    private func exchange(sourceAmount: Double,
-                          sourceCurrency: Currency?,
-                          targetCurrency: Currency?,
-                          completion: @escaping (Result<Double, Error>) -> ()) {
-        guard let sourceCurrencyString = sourceCurrency?.rawValue,
-        let targetCurrencyString = targetCurrency?.rawValue else {
+    @IBAction func didTouchUpInside(_ exchangeButton: UIButton) {
+        guard let sourceAmountText = sourceCurrencyView.textField.text,
+              let sourceAmount = Double(sourceAmountText), sourceAmount > 0,
+              let sourceCurrency = sourceCurrency,
+              let availableAmount = balance.amounts.first(where: { $0.currency == sourceCurrency })?.amount,
+              sourceAmount <= availableAmount else {
+            return presentAlert("Invalid source amount")
+        }
+        guard let targetAmountText = targetCurrencyView.textField.text,
+              let targetAmount = Double(targetAmountText), targetAmount > 0 else {
+            return presentAlert("Invalid target amount")
+        }
+        guard let targetCurrency = targetCurrency else {
             return
         }
-
-        converter.exchange(sourceAmount: sourceAmount,
-                           sourceCurrency: sourceCurrencyString,
-                           targetCurrency: targetCurrencyString)
-        { result in
-            switch result {
-            case .success(let targetAmount):
-                completion(.success(targetAmount))
-            case .failure(let error):
-                completion(.failure(error))
-            }
+        confirmExchange(sourceAmount: sourceAmount, sourceCurrency: sourceCurrency,
+                        targetAmount: targetAmount, targetCurrency: targetCurrency)
+        { [weak self] in
+            guard let self = self else { return }
+            let amounts = self.commissionApplier.afterApplication(
+                sourceAmount: sourceAmount, sourceCurrency: sourceCurrency.rawValue,
+                targetAmount: targetAmount, targetCurrency: targetCurrency.rawValue
+            )
+            self.updateBalance(sourceAmount: amounts.sourceAmount, sourceCurrency: sourceCurrency,
+                                targetAmount: amounts.targetAmount, targetCurrency: targetCurrency)
         }
     }
     
-    private func exchangeFromBalance() {
-        guard let sourceCurrency = sourceCurrency,
-            let sourceAmountText = sourceCurrencyView.textField.text,
-            let sourceAmount = Double(sourceAmountText),
-            let targetCurrency = targetCurrency,
-            let targetAmountText = targetCurrencyView.textField.text,
-            let targetAmount = Double(targetAmountText) else {
-            return
-        }
-        for i in 0..<balance.inCurrencies.count {
-            if balance.inCurrencies[i].currency == sourceCurrency {
-                balance.inCurrencies[i].amount -= sourceAmount
-            } else if balance.inCurrencies[i].currency == targetCurrency {
-                balance.inCurrencies[i].amount += targetAmount
-            }
-        }
-        updateBalance()
-    }
-    
-    func showAlertMessage() {
-        let commision = PercentageFee(sourceAmount: <#T##Double#>, sourceCurrency: <#T##Currency#>)
-        let message =  "You have converted \(String(describing: sourceCurrencyView.textField.text ?? "")) \(String(describing: sourceCurrency?.rawValue ?? "")) to \(String(describing: targetCurrencyView.textField.text ?? "")) \(String(describing: targetCurrency?.rawValue ?? "")). Commission Fee - \(String(describing: commission.amountStringValue ?? "")) \(String(describing: sourceCurrency?.rawValue ?? ""))."
-        let alert = UIAlertController(title: "Currency converted", message:, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Done", style: .default))
+    private func confirmExchange(sourceAmount: Double, sourceCurrency: Currency,
+                                 targetAmount: Double, targetCurrency: Currency,
+                                 completion: @escaping () -> Void) {
+        let commissionDescription = commissionApplier.nextApplicationDescription(
+            sourceAmount: sourceAmount, sourceCurrency: sourceCurrency.rawValue,
+            targetAmount: targetAmount, targetCurrency: targetCurrency.rawValue
+        )
+        let message = """
+        You will convert \(sourceAmount.amountStringValue) \(sourceCurrency) to \(targetAmount.amountStringValue) \(targetCurrency). Commission Fee - \(commissionDescription).
+        """
+        let alert = UIAlertController(title: "Currency conversion", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .default))
+        let exchange = UIAlertAction(title: "Exchange", style: .destructive, handler: { action in
+            completion()
+        })
+        alert.addAction(exchange)
         present(alert, animated: true)
     }
     
-    func shouldEnableSubmit(_ isEnabled: Bool) {
-        submitButton.isEnabled = isEnabled
-        if isEnabled {
-            submitButton.backgroundColor = .blue
-        } else {
-            submitButton.backgroundColor = .gray
+    private func presentAlert(_ message: String) {
+        let alert = UIAlertController(title: "", message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func updateBalance(sourceAmount: Double, sourceCurrency: Currency,
+                               targetAmount: Double, targetCurrency: Currency) {
+        for i in 0..<balance.amounts.count {
+            if balance.amounts[i].currency == sourceCurrency {
+                balance.amounts[i].amount -= sourceAmount
+            } else if balance.amounts[i].currency == targetCurrency {
+                balance.amounts[i].amount += targetAmount
+            }
         }
+        updateBalanceView()
     }
 }
 
 extension ConverterViewController: UITextFieldDelegate {
     func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-        guard let typed = (textField.text as NSString?)?.replacingCharacters(in: range, with: string),
-           let amount = Double(typed) else {
+        guard let typed = (textField.text as NSString?)?.replacingCharacters(in: range, with: string) else {
             return true
         }
         
-        if !(sourceCurrencyView.textField.text?.isEmpty ?? true) && !(targetCurrencyView.textField.text?.isEmpty ?? true){
-            shouldEnableSubmit(true)
-        } else {
-            shouldEnableSubmit(false)
-        }
-        
         if textField === sourceCurrencyView.textField {
-            from(sourceAmount: amount, updateTarget: targetCurrencyView.textField)
+            if let amount = Double(typed),
+               let sourceCurrency = sourceCurrency?.rawValue,
+               let targetCurrency = targetCurrency?.rawValue {
+                update(sourceAmount: amount, sourceCurrency: sourceCurrency,
+                       targetCurrency: targetCurrency, targetTextField: targetCurrencyView.textField)
+            } else {
+                targetCurrencyView.textField.text = ""
+            }
         }
         else if textField === targetCurrencyView.textField {
-            from(sourceAmount: amount, updateTarget: sourceCurrencyView.textField)
+            if let amount = Double(typed),
+               let sourceCurrencyValue = targetCurrency?.rawValue,
+               let targetCurrencyValue = sourceCurrency?.rawValue {
+                update(sourceAmount: amount, sourceCurrency: sourceCurrencyValue,
+                       targetCurrency: targetCurrencyValue, targetTextField: sourceCurrencyView.textField)
+            } else {
+                sourceCurrencyView.textField.text = ""
+            }
         }
         return true
-    }
-    
-    func textFieldDidChangeSelection(_ textField: UITextField) {
-        
-        if let typedText = textField.text {
-            var dotCount = 0
-            for c in typedText {
-                if String(c) == "." || String(c) == "," {  dotCount += 1  }
-            }
-            if dotCount >= 2 {    
-                textField.text = String(typedText.dropLast())
-            }
-        }
     }
 }
 

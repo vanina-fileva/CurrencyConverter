@@ -7,18 +7,22 @@
 
 import Foundation
 
-protocol CurrencyConverter {
-    func exchange(sourceAmount: Double, sourceCurrency: String, targetCurrency: String,
-                  completion: @escaping (Result<Double, Error>) -> ())
+protocol Converter {
+    func convert(sourceAmount: Double, sourceCurrency: String, targetCurrency: String,
+                 completion: @escaping (Result<Double, Error>) -> ()) -> Cancellable?
 }
 
-class CurrencyAPIConverter: CurrencyConverter {
+protocol Cancellable {
+    func cancel()
+}
+
+class APIConverter: Converter {
     
-    func exchange(sourceAmount: Double, sourceCurrency: String, targetCurrency: String,
-                  completion: @escaping (Result<Double, Error>) -> ()) {
+    func convert(sourceAmount: Double, sourceCurrency: String, targetCurrency: String,
+                 completion: @escaping (Result<Double, Error>) -> ()) -> Cancellable? {
         let urlString = "http://api.evp.lt/currency/commercial/exchange/\(sourceAmount)-\(sourceCurrency)/\(targetCurrency)/latest"
         guard let endpoint = URL(string: urlString) else {
-            return
+            return nil
         }
         let task = URLSession.shared.dataTask(with: URLRequest(url: endpoint))
         { data, response, error in
@@ -34,5 +38,8 @@ class CurrencyAPIConverter: CurrencyConverter {
             return completion(.failure(URLError(.cannotLoadFromNetwork)))
         }
         task.resume()
+        return task
     }
 }
+
+extension URLSessionDataTask: Cancellable {}
